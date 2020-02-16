@@ -1,11 +1,10 @@
 
-const Alexa = require('ask-sdk');
-
+const Alexa = require('ask-sdk-core');
 
 var request = require('request'),
   fs = require('fs'),
   url = 'https://e34c23e8.ngrok.io/check_parking';
-//import packages
+
 var express = require('express');
 var cors = require('cors')
 
@@ -24,70 +23,73 @@ const options = {
 
 // env variables
 const PORT = process.env.PORT || 8001;
-
+const num_parking_spaces = 8;
 
 const vision = require('@google-cloud/vision');
 
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
-    console.log(Alexa.getRequestType(handlerInput.requestEnvelope))
-    return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
+    // console.log('alexa baby, whos down for some football ehhn?')
+    // console.log(Alexa.getRequestType(handlerInput.requestEnvelope))
+    // return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
+    return true;
   },
-  handle(handlerInput, num_cars) {
+  handle(handlerInput, res_text) {
     return new Promise((resolve, reject) => {
-      var response_text;
-      if (num_cars < 8) {
-        response_text = "Yes, there is parking!";
-      } else {
-        response_text = "No, parking is full!";
-      }
-      resolve(handlerInput.responseBuilder
-        .speak(response_text)
-        .withSimpleCard(
-          "This is the Title of the Card",
-          "This is the card content. This card just has plain text content.\r\nThe content is formated with line breaks to improve readability.")
-        .getResponse())
+      return handlerInput.responseBuilder
+        .speak(res_text)
+        .getResponse()
     })
-    }
+  }
 
 };
 
 async function handle_alexa(request, response) {
-// function handle_alexa(request, response) {
+  // function handle_alexa(request, response) {
   // return new Promise((resolve, reject) => {
-    const fileName = `./img.png`;
-    const client = new vision.ImageAnnotatorClient();
+  const fileName = `./img.png`;
+  const client = new vision.ImageAnnotatorClient();
 
-    /**
-     * TODO(developer): Uncomment the following line before running the sample.
-     */
+  /**
+   * TODO(developer): Uncomment the following line before running the sample.
+   */
 
-    const req = {
-      image: { content: fs.readFileSync(fileName) },
-    };
+  const req = {
+    image: { content: fs.readFileSync(fileName) },
+  };
 
-    console.log('about to await on client.objectLocalization')
-    const [result] = await client.objectLocalization(req);
-    const objects = result.localizedObjectAnnotations;
+  console.log('about to await on client.objectLocalization')
+  const [result] = await client.objectLocalization(req);
+  const objects = result.localizedObjectAnnotations;
 
-    // count number of 'packaged goods'
-    let num_cars = 0
-    objects.forEach(object => {
-      console.log(`Name: ${object.name}`);
-      console.log(`Confidence: ${object.score}`);
-      if (object.name == 'Packaged goods' || object.name === 'Tin can') {
-        num_cars += 1;
-      }
-      const vertices = object.boundingPoly.normalizedVertices;
-      vertices.forEach(v => console.log(`x: ${v.x}, y:${v.y}`));
-    });
-
-    console.log('number of cars: ' + num_cars)
-
-    if (LaunchRequestHandler.canHandle(request)) {
-      final_response = LaunchRequestHandler.handle(request, num_cars);
-      response.send(final_response);
+  // count number of 'packaged goods'
+  let num_cars = 0
+  objects.forEach(object => {
+    console.log(`Name: ${object.name}`);
+    console.log(`Confidence: ${object.score}`);
+    if (object.name == 'Packaged goods' || object.name === 'Tin can' || object.name === 'Toy' || object.name === 'Toy Vehicle') {
+      num_cars += 1;
     }
+    const vertices = object.boundingPoly.normalizedVertices;
+    vertices.forEach(v => console.log(`x: ${v.x}, y:${v.y}`));
+  });
+
+  console.log('number of cars: ' + num_cars)
+
+  var response_text;
+  if (num_cars < num_parking_spaces) {
+    response_text = "Yes, there is parking!";
+    console.log('Yes, there is parking!')
+  } else {
+    response_text = "No, parking is full!";
+    console.log('No, parking is full!')
+  }
+
+
+  if (LaunchRequestHandler.canHandle(request)) {
+    final_response = LaunchRequestHandler.handle(request, response_text);
+    response.send(final_response);
+  }
   // })
 }
 
@@ -111,7 +113,7 @@ async function quickstart(response) {
   console.log(result);
   const objects = result.localizedObjectAnnotations;
 
-  if (objects.length < 8) {
+  if (objects.length < num_parking_spaces) {
     response.send(' Yes there is parking!')
     console.log('Yes, there is parking!')
   }
