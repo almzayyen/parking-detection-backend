@@ -26,6 +26,10 @@ const PORT = process.env.PORT || 8001;
 const num_parking_spaces = 8;
 
 const vision = require('@google-cloud/vision');
+// const skillBuilder = Alexa.SkillBuilders.custom();
+
+// skillBuilder.addRequestHandlers( LaunchRequestHandler )
+
 
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
@@ -35,13 +39,38 @@ const LaunchRequestHandler = {
     return true;
   },
   handle(handlerInput, res_text) {
+    console.log('handler input:')
+    console.log(handlerInput);
     return new Promise((resolve, reject) => {
       return handlerInput.responseBuilder
         .speak(res_text)
         .getResponse()
     })
   }
+};
 
+const HelloWorldIntentHandler = {
+  canHandle(handlerInput) {
+    console.log(handlerInput)
+    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+  },
+  handle(handlerInput, res_text) {
+    console.log('handler input:')
+    console.log(handlerInput);
+    return new Promise((resolve, reject) => {
+      return handlerInput.responseBuilder
+        .speak(res_text)
+        .getResponse()
+    })
+  }
+  // handle(handlerInput) {
+  //   const speechText = 'Hello World!';
+
+  //   return handlerInput.responseBuilder
+  //     .speak(speechText)
+  //     .withSimpleCard('Hello World', speechText)
+  //     .getResponse();
+  // }
 };
 
 async function handle_alexa(request, response) {
@@ -85,9 +114,11 @@ async function handle_alexa(request, response) {
     console.log('No, parking is full!')
   }
 
-
+  // if (HelloWorldIntentHandler.canHandle(request)) {
   if (LaunchRequestHandler.canHandle(request)) {
-    final_response = LaunchRequestHandler.handle(request, response_text);
+    // final_response = LaunchRequestHandler.handle(request, response_text);
+    // // final_response = HelloWorldIntentHandler.handle(request, response_text);
+    final_response = response_text;
     response.send(final_response);
   }
   // })
@@ -159,7 +190,8 @@ app.get('/alexa-parking', (req, res) => {
   console.log('get request to ./alexa-parking')
   download(url, 'img.png', () => {
     console.log('image downloaded')
-    res.send(handle_alexa(req, res));
+    // res.send(handle_alexa(req, res));
+    handle_alexa(req,res)
   })
 
 
