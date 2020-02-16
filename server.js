@@ -119,36 +119,37 @@ async function quickstart(response) {
 app.use(bodyParser.json(), cors()) // cross origin resource sharing
 
 
-// // for now just return 404 to every route
-// app.all('*', (request, response) => {
-//     console.log('returning 404 to catch-all route')
-//     return response.sendStatus(404);
-// })
-var download = function(uri, filename, callback){
+var download = (uri, filename, callback) => {
+  return new Promise((resolve, reject) => {
     request.head(uri, function(err, res, body){
       console.log('content-type:', res.headers['content-type']);
       console.log('content-length:', res.headers['content-length']);
   
       request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
     });
+  })
+    
   };
-app.get('/parking', (request, response) => {
-    // var image = https.get(options, () => {
-    //     console.log('Status: ' + response.statusCode)
-    //     console.log('Body ' + response.content)
-    // });
-    // request(url).pipe(fs.createWriteStream('downloaded.jpg'));
-    download(url, 'img.png', () => {
-        console.log('done');
-    });
-    quickstart(response);
+// app.get('/parking', (request, response) => {
+//     // var image = https.get(options, () => {
+//     //     console.log('Status: ' + response.statusCode)
+//     //     console.log('Body ' + response.content)
+//     // });
+//     // request(url).pipe(fs.createWriteStream('downloaded.jpg'));
+//     download(url, 'img.png', () => {
+//         console.log('done');
+//     });
+//     quickstart(response);
 
-})
+// })
 
 app.get('/alexa-parking', (req, res)  => {
 
-  download(url, 'img.png');
-  res.send(handle_alexa(req, res));
+  download(url, 'img.png')
+  .then(() => {
+    res.send(handle_alexa(req, res));
+  })
+  
 })
 
 // start command
